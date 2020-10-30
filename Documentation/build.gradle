@@ -1,0 +1,69 @@
+plugins {
+  id "kr.motd.sphinx" version "2.6.1"
+  id "org.openapi.generator" version "4.1.3"
+}
+
+apply plugin: 'base'
+apply plugin: 'java'
+
+//-------------------------------------------------------------------------------------------------
+
+sphinx {
+  sourceDirectory = "${projectDir}"
+  outputDirectory = "${buildDir}/sphinx/"
+}
+
+openApiValidate {
+    inputSpec = "$rootDir/Documentation/http-api/openapi.json".toString()
+}
+
+openApiGenerate {
+    generatorName = "java"
+    inputSpec = "$rootDir/Documentation/http-api/openapi.json".toString()
+    outputDir = "$rootDir/Documentation/http-api/openapi-java-client".toString()
+    configOptions = [
+        //The generated java code contains a timestamp annotation by default 
+        //Compiling fails because this annotation  was moved to another package with  java11(?)
+        //Removing the annotation to make it compile with java 11
+        hideGenerationTimestamp: true,
+        modelPackage: "com.openexchange.coi.services.testing.httpclient.models",
+        invokerPackage: "com.openexchange.coi.services.testing.httpclient.invoker",
+        apiPackage: "com.openexchange.coi.services.testing.httpclient.modules",
+        artifactId: "httpclient",
+        artifactVersion: ""
+    ]
+}
+
+//-------------------------------------------------------------------------------------------------
+//TASKS
+
+task docu {
+    dependsOn sphinx
+    group = "Documentation"
+    description = "Wrapper task for building the COI Services docs"
+    doFirst {
+        println 'Creating sphinx docs...'
+    }
+}
+
+
+task createHttpClientCode {
+    group = "HTTP Client Generation"
+    description = "Creates a gradle project and java client code for the COI Services API"
+    doFirst {
+        println 'Building HTTP API client source code and gradle project...'
+    }
+}
+createHttpClientCode.dependsOn tasks.openApiGenerate
+
+
+task buildHttpClient(type: GradleBuild){
+    group = "HTTP Client Generation"
+    description = "Builds the java HTTP client for accessing the COI Services API"
+    buildFile = 'http-api/openapi-java-client/build.gradle'
+    tasks = ['build']
+}
+buildHttpClient.dependsOn tasks.openApiValidate
+buildHttpClient.dependsOn tasks.createHttpClientCode
+
+//-------------------------------------------------------------------------------------------------

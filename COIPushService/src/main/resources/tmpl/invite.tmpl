@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OX COI Messenger Invite</title>
+    <style type="text/css">
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+            font-size: 16px;
+            margin: 0;
+        }
+
+        .contact-container {
+            display: flex;
+            justify-content: center;
+            background-color: #0d7bcc;
+            color: #fff;
+            padding: 32px 64px;
+            text-align: center;
+
+        }
+
+        .user-name-contact {
+            margin-top: 24px;
+            font-size: 24px;
+        }
+
+        .user-img {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            margin-bottom: 32px;
+        }
+
+        .item {
+            margin: 8px;
+        }
+
+        .invite-container {
+            display: flex;
+            justify-content: stretch;
+            flex-direction: column;
+            background-color: #fff;
+            padding: 16px 32px;
+        }
+
+        .invite-container > *:not(:last-child) {
+            padding-bottom: 16px;
+        }
+
+        .top {
+            display: flex;
+            align-items: center;
+        }
+
+        .coi-img {
+            margin-right: 16px;
+        }
+
+        .invite-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .invite-message {
+            flex-grow: 1;
+            overflow: auto;
+        }
+
+        .store-link-container {
+            display: flex;
+            justify-content: space-between;
+            margin-left: -26px;
+        }
+
+        .google {
+            width: 205px;
+            height: 70px;
+            background-size: 205px 84px;
+            background-image: url("/images/google_play.png");
+        }
+
+        .apple {
+            margin-top: 13px;
+            width: 175px;
+            height: 60px;
+            background-size: 175px 60px;
+            background-image: url("/images/apple_store.svg");
+        }
+
+        h1,
+        h2 {
+            font-weight: 400;
+            margin: 0;
+        }
+
+        .app-title {
+            display: inline-block;
+        }
+
+        .start-link-container {
+            text-align: center;
+            padding-top: 16px;
+        }
+
+        .start-link {
+            display: block;
+            width: 270px;
+            height: 55px;
+            background-color: #0d7bcc;
+            color: #fff;
+            border: none;
+            border-radius: 32px;
+            font-size: 20px;
+            text-decoration: none;
+            line-height: 55px;
+        }
+
+        @media only screen and (max-width: 750px) {
+
+            .window-container {
+                min-width: 400px;
+            }
+
+            .template-container {
+                height: 100%;
+                display: flex;
+                flex-flow: column;
+            }
+
+        }
+
+        @media only screen and (min-width: 751px) {
+
+            .window-container {
+                background-color: #f5f5f5;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .template-container {
+                height: 650px;
+                width: 975px;
+                display: flex;
+                flex-flow: row;
+            }
+
+            .contact-container {
+                border-radius: 32px 0 0 32px;
+            }
+
+            .invite-container {
+                padding: 48px 64px;
+                border-radius: 0 32px 32px 0;
+                justify-content: space-between;
+            }
+
+            .store-link-container {
+                justify-content: flex-start;
+            }
+
+            .start-button-container {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="window-container">
+        <div class="template-container">
+            <div class="contact-container">
+                <div class="contact-info item">
+                    <div class="image-container">
+                        <img class="user-img" src="${image}" alt="user image">
+                    </div>
+                    <div class="user-name-contact item">
+                        ${name}
+                    </div>
+                    <div class="user-email-contact item">
+                        ${email}
+                    </div>
+                </div>
+            </div>
+            <div class="invite-container">
+                <div class="top it">
+                    <img class="coi-img" src="/images/coi.png" alt="Coi logo">
+                    <h1 class="app-title">OX COI Messenger</h1>
+                </div>
+                <div class="message-greeting it">
+                    <span class="invite-title">You've been invited to OX COI Messenger!</span>
+                </div>
+                <div class="invite-message it">
+                    <span class="user-name">${name}</span> <a href="" class="user-email">- ${email}
+                        -</a> invites you to OX COI Messenger.
+                    ${message}
+                </div>
+                <div class="store-link-container it">
+                    <a class="store-link" href="${google}">
+                        <div class="oxcoi-link google"></div>
+                    </a>
+                    <a class="store-link" href="${apple}">
+                        <div class="oxcoi-link apple"></div>
+                    </a>
+                </div>
+                <div class="start-conversation-container">
+                    <div class="message-after it">
+                        <h2>After installing and signing in:</h2>
+                    </div>
+                    <div class="start-link-container">
+                        <a href="${start}" target="_blank" class="start-link"> Start your conversation</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

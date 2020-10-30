@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: coi-service-account
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: coi-default-namespace
+subjects:
+  - kind: ServiceAccount
+    name: coi-service-account
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: role-tokenreview-binding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+- kind: ServiceAccount
+  name: coi-service-account
+  namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: coi-services-deployment
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: coi-services-server
+    template:
+        metadata: 
+            labels:
+                app: coi-services-server
+        spec:
+            # Specify the service account to run under
+            serviceAccountName: coi-service-account
+            containers:
+                - name: coi-service-server
+                  image: gitlab.open-xchange.com:4567/coi-services/pushservice:latest
+                  imagePullPolicy: Always
+                  volumeMounts:
+                      - name: config-dir-volume
+                        mountPath: /opt/coi-push-service/config
+                      - name: template-dir-volume
+                        mountPath: /opt/coi-push-service/templates
+                  env:
+                      - name: SPRING.CLOUD.KUBERNETES.CONFIG.ENABLED
+                        value: "true"
+                      - name: SPRING.CLOUD.KUBERNETES.CONFIG.NAME
+                        value: "coi-services-config"
+                      - name: SPRING_PROFILES_ACTIVE
+                        valueFrom:
+                          configMapKeyRef:
+                            name: coi-services-config
+                            key: SPRING_PROFILES_ACTIVE
+            imagePullSecrets:
+                - name: regcred
+            volumes:
+               - name: config-dir-volume
+                 configMap:
+                   name: coi-services-config-dir
+                   optional: true
+               - name: template-dir-volume
+                 configMap:
+                   name: coi-services-tmpl-dir
+                   optional: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coi-service
+spec:
+  selector:
+    app: coi-services-server
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    name: coi-services-lb
+  type: LoadBalancer

@@ -1,0 +1,14 @@
+pluginManagement {
+    repositories {
+        maven {
+            url = "https://artifactory.open-xchange.com/artifactory/libs-release"
+        }
+    }
+}
+
+rootProject.name='pushservice'
+include ':Test'
+include ':COIPushService'
+include ':Documentation'
+include ':Documentation:http-api:openapi-java-client'
+

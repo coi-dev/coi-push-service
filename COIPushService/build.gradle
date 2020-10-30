@@ -1,0 +1,112 @@
+//-------------------------------------------------------------------------------------------------
+
+plugins {
+    id "io.spring.dependency-management" version "1.0.8.RELEASE"
+    id 'java'
+    id 'com.adarshr.test-logger' version '1.7.0'
+    id "io.freefair.lombok" version "3.8.1"
+    id 'org.springframework.boot' version '2.1.5.RELEASE'
+}
+
+group = 'com.openexchange'
+sourceCompatibility = '11'
+
+repositories {
+    maven { url "https://artifactory.open-xchange.com/artifactory/libs-release" }
+    maven { url "https://jitpack.io" }
+}
+
+bootJar {
+    //This seems to be required because otherwise it will fail for some reaon if other gradle projects
+    //(like autosemver) have spring-boot dependencies
+    mainClassName = 'com.openexchange.coi.services.CoiServiceApplication'
+}
+
+dependencies {
+
+    compile("org.springframework.boot:spring-boot-starter-web") {
+        exclude module: "spring-boot-starter-tomcat"
+    }
+
+    compile 'org.eclipse.jetty:jetty-webapp:9.+'
+    compile 'org.eclipse.jetty:jetty-jsp:9.+'
+    compile 'org.springframework.boot:spring-boot-starter-data-jpa'
+    // https://mvnrepository.com/artifact/commons-io/commons-io
+    compile group: 'commons-io', name: 'commons-io', version: '2.6'
+    // https://mvnrepository.com/artifact/com.google.firebase/firebase-core
+    compile("org.springframework.boot:spring-boot-starter-actuator")
+    // https://mvnrepository.com/artifact/io.micrometer/micrometer-registry-statsd
+    compile group: 'io.micrometer', name: 'micrometer-registry-statsd', version: '1.2.0'
+
+    compile group: 'org.liquibase', name: 'liquibase-core', version: '3.6.3'
+    compile 'com.clevertap.apns:apns-http2:1.0.3'
+    compile 'com.github.kenglxn.QRGen:javase:2.5.0'
+    implementation 'com.nimbusds:nimbus-jose-jwt:7.9'
+    implementation 'com.google.firebase:firebase-admin:6.8.1'
+    implementation 'org.mariadb.jdbc:mariadb-java-client:2.1.2'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-config
+    compile group: 'org.springframework.cloud', name: 'spring-cloud-starter-config', version: '2.1.3.RELEASE'
+    // https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-kubernetes
+    compile group: 'org.springframework.cloud', name: 'spring-cloud-starter-kubernetes', version: '1.0.2.RELEASE'
+    // https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-kubernetes-config
+    compile group: 'org.springframework.cloud', name: 'spring-cloud-starter-kubernetes-config', version: '1.0.2.RELEASE'
+
+    //logstash appender
+    implementation 'net.logstash.logback:logstash-logback-encoder:6.1'
+
+    // Vault
+    // https://mvnrepository.com/artifact/org.springframework.vault/spring-vault-core
+    compile group: 'org.springframework.vault', name: 'spring-vault-core', version: '2.1.3.RELEASE'
+
+    // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-cache
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-cache', version: '2.1.6.RELEASE'
+    // https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine
+	compile group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '2.8.0'
+
+    // https://mvnrepository.com/artifact/javax.cache/cache-api
+    compile group: 'javax.cache', name: 'cache-api', version: '1.1.1'
+    // https://mvnrepository.com/artifact/org.projectlombok/lombok
+    compile group: 'org.projectlombok', name: 'lombok', version: '1.18.8'
+    // https://mvnrepository.com/artifact/org.freemarker/freemarker
+    compile group: 'org.freemarker', name: 'freemarker', version: '2.3.28'
+    // https://mvnrepository.com/artifact/org.springframework.security/spring-security-config
+    compile group: 'org.springframework.security', name: 'spring-security-config', version: '5.1.6.RELEASE'
+    // https://mvnrepository.com/artifact/org.springframework.security/spring-security-web
+    compile group: 'org.springframework.security', name: 'spring-security-web', version: '5.1.6.RELEASE'
+    // Ratelimit
+    implementation 'com.github.vladimir-bukhtoyarov:bucket4j-core:4.4.1'
+
+    implementation 'com.blackducksoftware.integration:integration-gradle-inspector:0.7.0'
+}
+
+//-------------------------------------------------------------------------------------------------
+//semver
+
+project.afterEvaluate {
+    bootJar {
+        //Write the version number to the MANIFEST file
+        manifest {
+            attributes('Implementation-Title': this.project.name, 'Implementation-Version': this.rootProject.version)
+        }
+    }
+}
+
+
+//-------------------------------------------------------------------------------------------------
+//TASKS
+
+task smokeTest( type: Test) {
+
+    reports {
+      html.enabled = true
+      junitXml.enabled = true
+    }
+
+    testLogging {
+        showStandardStreams = true
+    }
+}
+
+//-------------------------------------------------------------------------------------------------

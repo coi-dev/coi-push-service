@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd
+    http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+	<changeSet author="kevin.ruthmann@open-xchange.com" id="1">
+		<preConditions onFail="CONTINUE">
+			<not>
+				<tableExists tableName="pushresources"></tableExists>
+			</not>
+		</preConditions>
+		<createTable tableName="pushresources">
+			<column name="id" type="VARCHAR(191)">
+				<constraints primaryKey="true" />
+			</column>
+			<column name="appid" type="VARCHAR(128)">
+				<constraints nullable="false" />
+			</column>
+			<column name="pushtoken" type="VARCHAR(256)">
+				<constraints nullable="false" />
+			</column>
+			<column name="transport" type="VARCHAR(128)">
+				<constraints nullable="false" />
+			</column>
+			<column name="lastmodified" type="DATETIME">
+				<constraints nullable="false" />
+			</column>
+			<column name="expiredate" type="DATETIME"></column>
+			<column name="publickey" type="BLOB">
+				<constraints nullable="false" />
+			</column>
+			<column name="validated" type="BOOLEAN">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+		<rollback>
+			<dropTable tableName="pushresources" />
+		</rollback>
+		<modifySql dbms="mysql">
+    		<append value="ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_unicode_ci"/>
+		</modifySql>
+	</changeSet>
+	<changeSet author="kevin.ruthmann@open-xchange.com" id="2">
+		<preConditions onFail="CONTINUE">
+			<not>
+				<tableExists tableName="invitations"></tableExists>
+			</not>
+		</preConditions>
+		<createTable tableName="invitations">
+			<column name="id" type="VARCHAR(191)">
+				<constraints primaryKey="true" />
+			</column>
+			<column name="name" type="VARCHAR(256)">
+				<constraints nullable="false" />
+			</column>
+			<column name="email" type="VARCHAR(256)">
+				<constraints nullable="false" />
+			</column>
+			<column name="expireDate" type="DATETIME">
+				<constraints nullable="false" />
+			</column>
+			<column name="image" type="LONGBLOB"></column>
+			<column name="publickey" type="BLOB"></column>
+			<column name="message" type="VARCHAR(1024)">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+		<rollback>
+			<dropTable tableName="invitations" />
+		</rollback>
+		<modifySql dbms="mysql">
+    		<append value="ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_unicode_ci"/>
+		</modifySql>
+	</changeSet>
+</databaseChangeLog>

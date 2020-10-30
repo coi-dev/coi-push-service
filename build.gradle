@@ -1,0 +1,159 @@
+import com.bmuschko.gradle.docker.tasks.image.*
+
+plugins {
+    id 'base'
+    id 'com.bmuschko.docker-remote-api' version '4.8.0'
+    id 'com.openexchange.autosemver.gradle-base' version '0.2.0'
+    id 'com.openexchange.autosemver.gradle-git'  version '0.1.1'
+    id 'com.openexchange.autosemver.gradle-jira' version '0.1.2'
+}
+
+repositories {
+    maven {
+        url = uri("https://artifactory.open-xchange.com/artifactory/libs-release")
+    }
+}
+
+
+//-------------------------------------------------------------------------------------------------
+//semver
+
+autoSemVer {
+
+    //Read current version from git tags
+    versionProvider = git.tagVersionProvider
+
+    //Determine current git branch from the git module's provide 
+    branchNameProvider = git.branchNameProvider
+
+    preReleaseProvider = git.branchNamePreReleaseProvider
+
+    //Calculate next version based on the "reelase type" field specified in 
+    //Jira for all found Jira issues in the git history
+    if(findProperty("jiraLogin")?.trim() &&
+       findProperty("jiraPassword")?.trim()){
+
+        incrementProvider = jira.issueCustomFieldIncrementProvider
+        jira {
+            issueKeyProvider = git.commitJiraIssueKeyProvider
+            url = findProperty("jiraURL")?.toString()
+            username = findProperty("jiraLogin")?.toString()
+            password = findProperty("jiraPassword")?.toString()
+            versionIncrementFieldId = "customfield_12505"
+        }
+    }
+    else {
+        println("Ignoring JIRA provider: Not able to setup JiraProvider due missing JIRA credentials")
+    }
+    
+    //Branches on which the gradle "release" task will operate only
+    releaseBranches.add("master")
+    
+    //Tag versions in git when publishing/releasing
+    versionPublisher.add(git.tagVersionPublisher)
+}
+
+//-------------------------------------------------------------------------------------------------
+//Docker
+
+//Configuration of the docker plugin
+docker {
+    url = oxDockerUrl
+    registryCredentials {
+        url = oxDockerRegistryUrl
+        username = oxDockerRegistryUsername
+        password = oxDockerRegistryPassword
+    }
+}
+
+//Gets the docker repository; Which is the configured repostitory or the project name if not configured
+def getDockerRepository() {
+    String repo = oxDockerRegistryUrl
+    if (repo == null || repo.isEmpty()) {
+        return "pushservice"
+    }
+    return repo.toLowerCase()
+}
+
+def getDockerImageID() {
+    return getDockerRepository() + ":" + this.project.version;
+}
+
+def getLatestDockerImageID() {
+    return getDockerRepository() + ":latest"
+}
+
+//Writes the current project version to a version.txt file
+//usefull for further processing
+def writeVersionFile() {
+    new File("${buildDir}/version.txt").text = this.project.version;
+}
+
+//-------------------------------------------------------------------------------------------------
+//TASKS
+
+task version {
+    group = "help"
+    description = "Shows the current version of the project"
+    doLast {
+        println("Project:\t\t" + this.project.name)
+        println("Current version:\t" + this.project.version)
+    }
+}
+
+task writeVersion {
+    group = "build"
+    description = "writes the project.version to a file for further processing"
+    doLast {
+        mkdir 'build'
+        writeVersionFile()
+    }
+}
+assemble.finalizedBy(writeVersion)
+
+//task copyDockerFile(type: Copy) {
+//    from file("Dockerfile")
+//    into file("$buildDir")
+//}
+
+task buildImage (type: DockerBuildImage) {
+    description = "Assembles a docker image containing the jar file ready to run."
+    group = "docker"
+    dependsOn 'COIPushService:assemble'
+    dependsOn 'Documentation:docu'
+    dependsOn writeVersion
+    inputDir = file('.')
+}
+project.afterEvaluate {
+    buildImage{
+        tags.add(getDockerImageID())
+        tags.add(getLatestDockerImageID())
+    }
+}
+
+task pushImage (type: DockerPushImage) {
+    group = "docker"
+    description = "pushes the docker image to a given docker registry"
+    dependsOn buildImage
+}
+project.afterEvaluate {
+    pushImage{
+        imageName = getDockerRepository()
+        if(!imageName){
+            throw new GradleException('Could not determine docker project name or repository name: imageName is null')
+        }
+
+        if (!project.hasProperty('version') || project.version == "unspecified"){
+            throw new GradleException('Could not determine docker image tag. Property \"project.version\" is undefined.')
+        }
+        tag = this.project.version
+    }
+}
+
+task pushImageAsLatest (type: DockerPushImage) {
+    group = "docker"
+    description = "pushes the docker image to a given docker registry while using the 'latest' tag"
+    dependsOn buildImage
+    imageName = getDockerRepository()
+    tag = 'latest'
+}

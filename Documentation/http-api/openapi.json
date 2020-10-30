@@ -1,0 +1,349 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: COI Push Service
+  license:
+    name: GNU GENERAL PUBLIC LICENSE
+servers:
+  - url: "http://localhost:8123/"
+    description: "For testing against localhost"
+paths:
+  /push/resource/:
+    put:
+      summary: Registers a new push resource
+      operationId: registerPushResource
+      tags:
+        - pushResource
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/RegistrationBody"
+      responses:
+        '201':
+          description: The created push resource
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/PushResource"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /push/resource/{id}:
+    get:
+      summary: Gets a push resource
+      operationId: getPushResource
+      tags:
+        - pushResource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the push resource
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The push resource
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/PushResource"
+        '404':
+          description: A push resource with this id doesn't exist
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      summary: Updates a push token or extend the expire date of a push resource
+      operationId: updatePushResource
+      tags:
+        - pushResource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the push resource
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/UpdateBody"
+      responses:
+        '200':
+          description: The changed push resource
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/PushResource"
+        '404':
+          description: A push resource with this id doesn't exist
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Deletes a push resource
+      operationId: deletePushResource
+      tags:
+        - pushResource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the push resource
+          schema:
+            type: string     
+      responses:
+        '200':
+          description: An empty response in case of success
+        '404':
+          description: A push resource with this id doesn't exist
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /push/send/{id}:
+    post:
+      summary: Sends a push message
+      operationId: sendPushMessage
+      tags:
+        - pushEndpoint
+      security:
+        - vapid: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the push resource
+          schema:
+            type: string
+      requestBody:
+        description: The push message
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: byte
+      responses:
+        '201':
+          description: An empty response in case of success
+        '400':
+          description: The push id is not a valid id
+        '404':
+          description: A push resource with this id doesn't exist
+        '401':
+          description: The VAPID authorization header is missing or is missing required fields.
+        '403':
+          description: The VAPID signature is invalid or the provided key doesn't match.
+        '429':
+          description: Can't send push message because of an exceeded quota.
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                format: int64
+              description: The time to wait in seconds before sending the next request.
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /invite/:
+    put:
+      summary: Creates a new invitation
+      operationId: createInvitation
+      tags:
+        - invitation
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/Invitation"
+      responses:
+        '201':
+          description: The created invitation
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/Invitation"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /invite/{id}:
+    get:
+      summary: Gets an invitation
+      operationId: getInvitation
+      tags:
+        - invitation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the invitation
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The invitation
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/Invitation"
+        '404':
+          description: An invitation with this id doesn't exist
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Deletes an invitation
+      operationId: deleteInvitation
+      tags:
+        - invitation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the invitation
+          schema:
+            type: string     
+      responses:
+        '200':
+          description: An empty response in case of success
+        '404':
+          description: An invitation with this id doesn't exist
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"                
+components:
+  schemas:
+    PushResource:
+      required:
+        - id
+        - endpoint
+        - appId
+        - pushToken
+        - lastModified
+        - transport
+        - publicKey
+      properties:
+        id:
+          description: The id of the push resource
+          type: string
+        appId:
+          description: The app id
+          type: string
+        pushToken:
+          description: The push token of the device
+          type: string
+        lastModified:
+          description: The time of the last change of the push resource in milliseconds since 01.01.1970
+          type: integer
+          format: int64
+        expireDate:
+          description: The time in milliseconds since 01.01.1970 when the push resource will expire. If this field is empty the push resource will not expire at all.
+          type: integer
+          format: int64
+        transport:
+          description: The transport to used to send push notifications. E.g. 'apns' or 'firebase'
+          type: string
+        endpoint:
+          description: A unique endpoint which can be used by the COI server to send push messages
+          type: string
+        publicKey:
+          description: The public key of the coi server
+          type: string
+    RegistrationBody:
+      properties:
+        appId: 
+          description: The id of the app
+          type: string
+        pushToken:
+          description: The push token
+          type: string
+        transport:
+          description: The transport to use. Currently supported is only 'firebase'
+          type: string
+        publicKey:
+          description: The public key of the coi server
+          type: string
+      required:
+        - appId
+        - pushToken
+        - transport
+        - publicKey
+    UpdateBody:
+      properties:
+        pushToken:
+          description: The push token
+          type: string
+      required:
+        - pushToken
+    Invitation:
+      properties:
+        message:
+          description: The message of the invitation
+          type: string
+        endpoint:
+          description: The endpoint for receiving the invitation
+          type: string
+        id:
+          description: The id of the invitation
+          type: string
+        sender:
+          description: The sender of the invitation
+          type: object
+          properties:
+            email:
+              description: The email of the sender
+              type: string
+            name:
+              description: The name of the sender
+              type: string
+            image:
+              description: The image of the sender as a base64 encoded string
+              type: string
+            publicKey:
+              description: The public key of the sender
+              type: string      
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+  securitySchemes:
+    vapid:
+      type: http
+      scheme: vapid
+      description: See VAPID RFC 8292
